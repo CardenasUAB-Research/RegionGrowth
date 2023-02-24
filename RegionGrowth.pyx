@@ -1,3 +1,4 @@
+# cython: language_level=3
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jun 11 18:50:26 2018
@@ -130,7 +131,7 @@ cdef class RegionGrow2D:
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef class RegionGrow3D:
-    cdef np.uint8_t[:,:,:] images
+    cdef short[:,:,:] images
     cdef np.uint8_t[:,:,:] masks
     cdef np.uint8_t[:,:,:] outputMask
 
@@ -140,11 +141,11 @@ cdef class RegionGrow3D:
     cdef neighborMode
     cdef queue
     
-    def __cinit__(self, np.uint8_t[:,:,:] images, np.uint8_t[:,:,:] masks, 
+    def __cinit__(self, short[:,:,:] images, np.uint8_t[:,:,:] masks, 
                   int upperThreshold, int lowerThreshold, neighborMode):
         self.images = images
         self.masks = masks
-        self.outputMask = np.zeros_like(self.images)
+        self.outputMask = np.zeros_like(self.images).astype('uint8')
         self.sz = images.shape[0]
         self.sy = images.shape[1]
         self.sx = images.shape[2]
@@ -154,7 +155,7 @@ cdef class RegionGrow3D:
         self.neighborMode = neighborMode
         self.queue = deque()
     
-    def main(self, int seeds, update=False):
+    def main(self, np.uint8_t[:,:] seeds, update=False):
         """
         seed: list of (z,y,x)
         """
@@ -168,13 +169,13 @@ cdef class RegionGrow3D:
             self.updateThreshold()
 
         while len(self.queue) != 0:
-            newItem = self.queue.pop()
-            neighbors = self.getNeighbors(newItem)
+            newItem = self.queue.pop() # (z, y, x)
+            neighbors = self.getNeighbors(newItem) # list of coords
             for neighbor in neighbors:
                 self.checkNeighbour(neighbor[0], neighbor[1], neighbor[2])
         return self.outputMask
 
-    cdef int[:,:,:] getNeighbors(self, int[:] newItem):
+    cdef long[:,:] getNeighbors(self, int[:] newItem):
         if self.neighborMode == "26n":
             neighbors = [
                 [newItem[0]-1, newItem[1]-1, newItem[2]-1],   [newItem[0]-1, newItem[1]-1, newItem[2]],   [newItem[0]-1, newItem[1]-1, newItem[2]+1],
