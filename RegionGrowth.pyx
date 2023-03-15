@@ -155,7 +155,7 @@ cdef class RegionGrow3D:
         self.neighborMode = neighborMode
         self.queue = deque()
     
-    def main(self, np.uint8_t[:,:] seeds, update=False):
+    def main(self, short[:,:] seeds, update=False):
         """
         seed: list of (z,y,x)
         """
